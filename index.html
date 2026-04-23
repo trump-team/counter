@@ -1,109 +1,673 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhoneGen — Bulk Phone Number Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #00cfff;
+    --danger: #ff4466;
+    --text: #e8e8f0;
+    --muted: #555570;
+    --card: #13131c;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 52px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+
+  header h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 1rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.15s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .card-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 24px;
+  }
+
+  /* Form grid */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr 160px;
+    gap: 16px;
+    align-items: end;
+  }
+
+  @media (max-width: 620px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid .field:nth-child(2) { grid-column: 1 / -1; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  label {
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    padding: 13px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input.has-prefix { padding-left: 36px; }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,255,136,0.08);
+  }
+
+  input.error { border-color: var(--danger); }
+  input.error:focus { box-shadow: 0 0 0 3px rgba(255,68,102,0.1); }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .hint {
+    font-size: 0.68rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .hint.danger { color: var(--danger); }
+
+  /* Generate button */
+  .btn-generate {
+    margin-top: 28px;
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+
+  .btn-generate:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,255,136,0.25);
+  }
+
+  .btn-generate:active:not(:disabled) { transform: translateY(0); }
+
+  .btn-generate:disabled {
+    background: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .btn-generate .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .btn-generate.loading .spinner { display: block; }
+  .btn-generate.loading .btn-text { display: none; }
+
+  /* Error banner */
+  .error-banner {
+    background: rgba(255,68,102,0.08);
+    border: 1px solid rgba(255,68,102,0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--danger);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .error-banner.show { display: flex; }
+
+  /* Results panel */
+  .results-card {
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .results-card.show { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: gap;
+    gap: 12px;
+  }
+
+  .results-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .badge {
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.25);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .btn-download {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    padding: 9px 18px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-download:hover {
+    background: var(--accent);
+    color: #0a0a0f;
+  }
+
+  /* Number list */
+  .number-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .number-list::-webkit-scrollbar { width: 4px; }
+  .number-list::-webkit-scrollbar-track { background: transparent; }
+  .number-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .number-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeIn 0.3s ease both;
+  }
+
+  .number-item:hover { border-color: var(--accent2); background: rgba(0,207,255,0.04); }
+  .number-item.copied { border-color: var(--accent); color: var(--accent); }
+
+  .number-item::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  /* Steps indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .step.done .step-num {
+    background: rgba(0,255,136,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .step-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .step.active .step-label { color: var(--text); }
+
+  .step-divider {
+    width: 32px;
+    height: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
 </head>
-
 <body>
-    
-    <style>
-        .firstbox {
-            height: 646px;
-            width: 340px;
-            text-align: center;
-            justify-self: center;
-            background-color: rgb(98, 98, 97);
-            border-radius: 50px;
-            border: solid rgb(186, 185, 183) 7px;
-            color: rgba(242, 225, 192, 1);
-        }
+<div class="container">
 
+  <!-- Header -->
+  <header>
+    <div class="logo-tag">⚡ PhoneGen</div>
+    <h1>Phone Number<br/>Generator</h1>
+    <p>// Generate up to 500 numbers at once → export as .txt</p>
+  </header>
 
-        .box {
-            margin-top: 20px;
-            justify-self: center;
-            background-color: rgb(186, 185, 183);
-            height: 330px;
-            width: 200px;
-            text-align: center;
-            border-radius: 50px;
-            border: solid rgb(186, 185, 183) 4px;
-            color: rgba(242, 225, 192, 1);
-        }
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step1">
+      <div class="step-num">01</div>
+      <div class="step-label">Enter Details</div>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step" id="step2">
+      <div class="step-num">02</div>
+      <div class="step-label">Generate</div>
+    </div>
+    <div class="step-divider"></div>
+    <div class="step" id="step3">
+      <div class="step-num">03</div>
+      <div class="step-label">Download</div>
+    </div>
+  </div>
 
-        .plus {
-            background-color: rgb(215, 199, 121);
-        }
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-title">// Configuration</div>
 
-        .minus {
-            background-color: rgb(134, 243, 249);
-        }
-
-
-        .age {
-            margin-top: 50px;
-        }
-
-
-        .dmood {
-            margin-top: 10px;
-        }
-    </style>
-
-    <div class="firstbox">
-        <div id="firstdiv" class="box">
-
-            <h2>counter</h2>
-            <h2 id="counterDisplay">0</h2>
-            <div class="container">
-                <div class="buttons">
-                    <button class="plus" id="addBtn">➕ </button>
-                    <button id="resetBtn"> reset </button>
-                    <button class="minus" id="subtractBtn">➖</button>
-
-                    <div class="container age">
-                        <h4>Age Calculator</h4>
-                        <input type="date" id="birthdate"> <br>
-                        <button onclick="calculateAge()">Calculate Age</button>
-                        <div id="result">. .</div>
-                    </div>
-                </div>
-            </div>
-
+    <div class="form-grid">
+      <!-- Country Code -->
+      <div class="field">
+        <label for="countryCode">Country Code</label>
+        <div class="input-wrap">
+          <span class="input-prefix">+</span>
+          <input type="text" id="countryCode" class="has-prefix" placeholder="Enter code" maxlength="4" />
         </div>
+        <span class="hint">e.g. 1 US, 44 UK, 234 NG</span>
+      </div>
 
-        <div class="dmood">
-            <button onclick="darkmood()">darkmood</button>
-            <button onclick="lightmood()">lightmood</button>
-        </div>
+      <!-- Base Number -->
+      <div class="field">
+        <label for="baseNumber">Base Phone Number</label>
+        <input type="text" id="baseNumber" placeholder="Enter phone number" maxlength="15" />
+        <span class="hint">Last 4 digits will be randomized</span>
+      </div>
 
+      <!-- Count -->
+      <div class="field">
+        <label for="count">How Many?</label>
+        <input type="number" id="count" placeholder="Enter amount" min="1" max="500" />
+        <span class="hint" id="countHint">Max: 500 numbers</span>
+      </div>
     </div>
 
-
-
+    <!-- Error -->
+    <div class="error-banner" id="errorBanner">
+      <span>⚠</span>
+      <span id="errorText">Error message here</span>
     </div>
-    <script src="./another,cranslator.js"></script>
 
+    <!-- Generate Button -->
+    <button class="btn-generate" id="generateBtn" onclick="handleGenerate()">
+      <div class="spinner"></div>
+      <span class="btn-text">⚡ Generate Numbers</span>
+    </button>
+  </div>
 
+  <!-- Results Card -->
+  <div class="card results-card" id="resultsCard">
+    <div class="results-header">
+      <div class="results-meta">
+        <div class="card-title" style="margin:0">// Generated Numbers</div>
+        <span class="badge" id="countBadge">0 numbers</span>
+      </div>
+      <button class="btn-download" onclick="downloadNumbers()">
+        ↓ Save as .txt
+      </button>
+    </div>
+    <div class="number-list" id="numberList"></div>
+  </div>
+
+</div>
+
+<script>
+let generatedNumbers = [];
+
+// Live count validation
+document.getElementById('count').addEventListener('input', function () {
+  const val = parseInt(this.value, 10);
+  const hint = document.getElementById('countHint');
+  if (val > 500) {
+    this.classList.add('error');
+    hint.textContent = '⛔ Cannot exceed 500 numbers';
+    hint.className = 'hint danger';
+  } else {
+    this.classList.remove('error');
+    hint.textContent = 'Max: 500 numbers';
+    hint.className = 'hint';
+  }
+});
+
+function showError(msg) {
+  const banner = document.getElementById('errorBanner');
+  document.getElementById('errorText').textContent = msg;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 5000);
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+async function handleGenerate() {
+  const countryCode = document.getElementById('countryCode').value.trim();
+  const baseNumber  = document.getElementById('baseNumber').value.trim();
+  const countRaw    = document.getElementById('count').value.trim();
+  const count       = parseInt(countRaw, 10);
+
+  // Client-side validation
+  if (!countryCode) return showError('Please enter a country code.');
+  if (!baseNumber)  return showError('Please enter a base phone number.');
+  if (!countRaw || isNaN(count) || count < 1) return showError('Please enter a valid count (1–500).');
+  if (count > 500)  return showError('Cannot generate more than 500 numbers at a time.');
+
+  const btn = document.getElementById('generateBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  setStep(2);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ countryCode, baseNumber, count })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || 'Something went wrong.');
+      setStep(1);
+    } else {
+      generatedNumbers = data.numbers;
+      renderNumbers(data.numbers);
+      setStep(3);
+    }
+  } catch (err) {
+    // Fallback: generate client-side if no server
+    const nums = generateClientSide(countryCode, baseNumber, count);
+    if (nums.error) {
+      showError(nums.error);
+      setStep(1);
+    } else {
+      generatedNumbers = nums;
+      renderNumbers(nums);
+      setStep(3);
+    }
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// Client-side fallback generator (no server needed)
+function generateClientSide(countryCode, baseNumber, count) {
+  const digits = baseNumber.replace(/\D/g, '');
+  if (digits.length < 7) return { error: 'Base number must have at least 7 digits.' };
+  if (count > 500) return { error: 'Cannot generate more than 500 numbers.' };
+
+  const cc = countryCode.replace(/\D/g, '');
+  const prefix = digits.slice(0, -4);
+  const generated = new Set();
+  let attempts = 0;
+
+  while (generated.size < count && attempts < count * 10) {
+    const suffix = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    generated.add(`+${cc} ${prefix}${suffix}`);
+    attempts++;
+  }
+  return Array.from(generated);
+}
+
+function renderNumbers(numbers) {
+  const list = document.getElementById('numberList');
+  const badge = document.getElementById('countBadge');
+  const resultsCard = document.getElementById('resultsCard');
+
+  badge.textContent = `${numbers.length} numbers`;
+  list.innerHTML = '';
+
+  numbers.forEach((num, i) => {
+    const item = document.createElement('div');
+    item.className = 'number-item';
+    item.textContent = num;
+    item.style.animationDelay = `${Math.min(i * 0.015, 0.6)}s`;
+    item.title = 'Click to copy';
+    item.onclick = () => {
+      navigator.clipboard.writeText(num).then(() => {
+        item.classList.add('copied');
+        item.textContent = '✓ Copied!';
+        setTimeout(() => {
+          item.classList.remove('copied');
+          item.textContent = num;
+        }, 1200);
+      });
+    };
+    list.appendChild(item);
+  });
+
+  resultsCard.classList.add('show');
+  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadNumbers() {
+  if (!generatedNumbers.length) return;
+
+  const content = generatedNumbers.join('\n');
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const ts   = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `phone_numbers_${ts}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
