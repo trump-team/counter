@@ -455,8 +455,8 @@
       <div class="field">
         <label for="baseNumber">Base Phone Number</label>
         <input type="tel" id="baseNumber"
-               placeholder="Enter phone number" maxlength="10" minlength="10" inputmode="numeric" />
-        <span class="hint">First 3 digits fixed · last 7 randomised · always 10 digits</span>
+               placeholder="Enter phone number" maxlength="15" inputmode="numeric" />
+        <span class="hint">First 3 digits fixed · remaining digits randomised per number</span>
       </div>
 
       <div class="field">
@@ -570,18 +570,18 @@ async function handleGenerate() {
 
 function generateClientSide(countryCode, baseNumber, count) {
   const digits = baseNumber.replace(/\D/g, '');
-  if (digits.length < 10) return { error: 'Base number must be exactly 10 digits.' };
-  if (count > 500)        return { error: 'Cannot generate more than 500 numbers.' };
+  if (digits.length < 3) return { error: 'Base number must have at least 3 digits.' };
+  if (count > 500)       return { error: 'Cannot generate more than 500 numbers.' };
 
-  const cc     = countryCode.replace(/\D/g, '');
-  const prefix = digits.slice(0, 3);   // first 3 digits stay fixed
+  const cc      = countryCode.replace(/\D/g, '');
+  const prefix  = digits.slice(0, 3);        // first 3 digits are always fixed
+  const restLen = digits.length - 3;         // randomise however many follow the first 3
   const generated = new Set();
   let attempts = 0;
 
   while (generated.size < count && attempts < count * 20) {
-    // randomise exactly 7 digits to complete the 10-digit number
     let suffix = '';
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < restLen; i++) {
       suffix += String(Math.floor(Math.random() * 10));
     }
     generated.add(`+${cc}${prefix}${suffix}`);
@@ -661,6 +661,7 @@ function saveToContacts() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
 </script>
 </body>
 </html>
