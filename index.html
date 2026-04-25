@@ -456,7 +456,7 @@
         <label for="baseNumber">Base Phone Number</label>
         <input type="tel" id="baseNumber"
                placeholder="Enter phone number" maxlength="15" inputmode="numeric" />
-        <span class="hint">First 3 digits fixed · remaining digits randomised per number</span>
+        <span class="hint">First 3 digits fixed · rest randomised · any length</span>
       </div>
 
       <div class="field">
@@ -570,12 +570,12 @@ async function handleGenerate() {
 
 function generateClientSide(countryCode, baseNumber, count) {
   const digits = baseNumber.replace(/\D/g, '');
-  if (digits.length !== 10) return { error: 'Base number must be exactly 10 digits.' };
-  if (count > 500)          return { error: 'Cannot generate more than 500 numbers.' };
+  if (digits.length < 4) return { error: 'Base number must have at least 4 digits.' };
+  if (count > 500)       return { error: 'Cannot generate more than 500 numbers.' };
 
-  const cc      = countryCode.replace(/\D/g, '');   // clean country code, no +
-  const prefix  = digits.slice(0, 3);                // first 3 digits locked
-  const restLen = 10 - 3;                            // always 7 remaining digits
+  const cc      = countryCode.replace(/\D/g, '');  // clean country code, no +
+  const prefix  = digits.slice(0, 3);               // first 3 digits always locked
+  const restLen = digits.length - 3;                // randomise whatever remains (4,5,6,7... digits)
   const generated = new Set();
   let attempts = 0;
 
@@ -584,7 +584,7 @@ function generateClientSide(countryCode, baseNumber, count) {
     for (let i = 0; i < restLen; i++) {
       suffix += String(Math.floor(Math.random() * 10));
     }
-    // E.164 format: +[countrycode][10-digit number] — no spaces, no dashes
+    // E.164: +[countrycode][prefix][randomised suffix]
     generated.add(`+${cc}${prefix}${suffix}`);
     attempts++;
   }
