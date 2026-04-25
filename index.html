@@ -570,12 +570,12 @@ async function handleGenerate() {
 
 function generateClientSide(countryCode, baseNumber, count) {
   const digits = baseNumber.replace(/\D/g, '');
-  if (digits.length < 3) return { error: 'Base number must have at least 3 digits.' };
-  if (count > 500)       return { error: 'Cannot generate more than 500 numbers.' };
+  if (digits.length !== 10) return { error: 'Base number must be exactly 10 digits.' };
+  if (count > 500)          return { error: 'Cannot generate more than 500 numbers.' };
 
-  const cc      = countryCode.replace(/\D/g, '');
-  const prefix  = digits.slice(0, 3);        // first 3 digits are always fixed
-  const restLen = digits.length - 3;         // randomise however many follow the first 3
+  const cc      = countryCode.replace(/\D/g, '');   // clean country code, no +
+  const prefix  = digits.slice(0, 3);                // first 3 digits locked
+  const restLen = 10 - 3;                            // always 7 remaining digits
   const generated = new Set();
   let attempts = 0;
 
@@ -584,6 +584,7 @@ function generateClientSide(countryCode, baseNumber, count) {
     for (let i = 0; i < restLen; i++) {
       suffix += String(Math.floor(Math.random() * 10));
     }
+    // E.164 format: +[countrycode][10-digit number] — no spaces, no dashes
     generated.add(`+${cc}${prefix}${suffix}`);
     attempts++;
   }
@@ -632,20 +633,27 @@ function fallbackCopy(text, cb) {
   cb();
 }
 
-/* ── Save as .vcf (vCard) — opens Contacts app on Android & iPhone ── */
+/* ── Save as .vcf (vCard) — strict E.164, works on all countries ── */
 function saveToContacts() {
   if (!generatedNumbers.length) return;
 
   const lines = [];
   generatedNumbers.forEach((num, i) => {
-    const idx  = String(i + 1).padStart(3, '0');
-    const name = `PhoneGen ${idx}`;
-    const tel  = num.startsWith('+') ? num : `+${num}`;
+    const idx = String(i + 1).padStart(3, '0');
+
+    // Strip everything except digits and leading +, enforce E.164
+    const digitsOnly = num.replace(/[^\d]/g, '');
+    const e164 = `+${digitsOnly}`;  // e.g. +2348012345678
+
+    // Contact name = the full number so it's easy to find in Contacts/WhatsApp
+    const name = e164;
+
     lines.push('BEGIN:VCARD');
     lines.push('VERSION:3.0');
     lines.push(`FN:${name}`);
-    lines.push(`N:${name};;;;`);
-    lines.push(`TEL;TYPE=CELL:${tel}`);
+    lines.push(`N:;${name};;;`);
+    lines.push(`TEL;TYPE=CELL,VOICE,PREF:${e164}`);
+    lines.push(`X-WHATSAPP:${e164}`);
     lines.push('END:VCARD');
     lines.push('');
   });
